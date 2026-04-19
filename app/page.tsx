@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 
 export default function Home() {
   return (
@@ -17,10 +18,27 @@ export default function Home() {
           </div>
           
           <div className="flex flex-col gap-2 z-10 shrink-0">
-            <a href="/tracker" className="border-2 border-[#111] bg-white hover:bg-neo-yellow py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block">
-              Go to Tracker
-            </a>
-            <div className="border-2 border-[#111] bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center">
+            <Show when="signed-in">
+              <a href="/tracker" className="border-2 border-[#111] bg-white hover:bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block">
+                Go to Tracker
+              </a>
+              <div className="flex justify-center border-2 border-[#111] bg-white py-1 px-3 shadow-[4px_4px_0px_0px_#111]">
+                <UserButton />
+              </div>
+            </Show>
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <button className="border-2 border-[#111] bg-white hover:bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block w-full">
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="border-2 border-[#111] bg-[#111] text-white hover:bg-white hover:text-[#111] py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block w-full mt-2">
+                  Subscribe (Sign Up)
+                </button>
+              </SignUpButton>
+            </Show>
+            <div className="border-2 border-[#111] bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center mt-2">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
           </div>
