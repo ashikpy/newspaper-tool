@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 // Helper to get calendar days
 function getDaysInMonth(year: number, month: number) {
@@ -115,13 +116,22 @@ export default function TrackerPage() {
           <h1 className="text-4xl md:text-5xl font-black font-display">
             Newspaper Tracker
           </h1>
-          <a
-            href="/"
-            className="border-2 border-[#111] bg-white px-4 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_#111] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
-          >
-            ← Back Home
-          </a>
+          <div className="flex gap-4 items-center">
+            <a
+              href="/"
+              className="border-2 border-[#111] bg-white px-4 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_#111] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
+            >
+              ← Back Home
+            </a>
+            <SignedIn>
+              <div className="border-2 border-[#111] bg-white h-[42px] px-2 flex items-center justify-center shadow-[4px_4px_0px_0px_#111]">
+                <UserButton />
+              </div>
+            </SignedIn>
+          </div>
         </header>
+
+        <SignedIn>
 
         <div className="flex flex-col lg:flex-row flex-1 divide-y-4 lg:divide-y-0 lg:divide-x-4 divide-[#111]">
           {/* Sidebar Section */}
@@ -263,6 +273,19 @@ export default function TrackerPage() {
             </div>
           </section>
         </div>
+        </SignedIn>
+        
+        <SignedOut>
+          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-neo-yellow">
+            <h2 className="text-3xl font-black uppercase mb-4">Tracking Requires Subscription!</h2>
+            <p className="font-bold mb-6">Sign in to start tracking your daily reading limits.</p>
+            <SignInButton mode="modal">
+              <button className="border-4 border-[#111] bg-white hover:bg-[#111] hover:text-white py-3 px-8 font-black uppercase text-xl shadow-[4px_4px_0px_0px_#111] transition-transform active:translate-x-[4px] active:translate-y-[4px] active:shadow-none">
+                Sign In Now
+              </button>
+            </SignInButton>
+          </div>
+        </SignedOut>
       </main>
     </div>
   );
