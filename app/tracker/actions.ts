@@ -1,24 +1,40 @@
 "use server";
 
 import prisma from "../lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+
+async function syncUser(clerkId: string) {
+  const user = await currentUser();
+  if (!user) return;
+
+  const email = user.emailAddresses[0]?.emailAddress;
+  const name = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+
+  await prisma.user.upsert({
+    where: { clerkId },
+    update: { email, name },
+    create: { clerkId, email, name },
+  });
+}
 
 export async function getTrackedDays(year: number, month: number) {
   const { userId } = await auth();
   if (!userId) return [];
   
-  // We fetch a wide range or just the specific month
-  // Month is 0-indexed in JS, so to get bounds:
-  const startDate = new Date(year, month, 1);
-  const endDate = new Date(year, month + 1, 0);
+  await syncUser(userId);
+
+  // Month is 0-indexed in JS. 
+  // We want to cover the entire range from the first of the month to the last.
+  const startDate = new Date(Date.UTC(year, month, 1));
+  const endDate = new Date(Date.UTC(year, month + 1, 1)); // Start of next month
 
   const tracks = await prisma.trackedDay.findMany({
     where: {
-      clerkId: userId,
+      userId: userId,
       date: {
         gte: startDate,
-        lte: endDate,
+        lt: endDate,
       }
     }
   });
@@ -34,13 +50,15 @@ export async function toggleTrackedDay(dateIso: string, vendorName: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
+  await syncUser(userId);
+
   const date = new Date(dateIso);
 
-  // Check if it exists
+  // Check if it exists (Prisma 7 uses userId in the constraint name now)
   const existing = await prisma.trackedDay.findUnique({
     where: {
-      clerkId_date_vendorName: {
-        clerkId: userId,
+      userId_date_vendorName: {
+        userId: userId,
         date: date,
         vendorName: vendorName
       }
@@ -52,9 +70,46 @@ export async function toggleTrackedDay(dateIso: string, vendorName: string) {
   } else {
     await prisma.trackedDay.create({
       data: {
-        clerkId: userId,
+        userId: userId,
         date: date,
         vendorName: vendorName
+      }
+    });
+  }
+}
+
+export async function bulkTrackDays(dateIsos: string[], vendorName: string, shouldTrack: boolean) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  await syncUser(userId);
+
+  if (shouldTrack) {
+    for (const iso of dateIsos) {
+      const date = new Date(iso);
+      await prisma.trackedDay.upsert({
+        where: {
+          userId_date_vendorName: {
+            userId: userId,
+            date: date,
+            vendorName: vendorName
+          }
+        },
+        create: {
+          userId: userId,
+          date: date,
+          vendorName: vendorName
+        },
+        update: {} 
+      });
+    }
+  } else {
+    const dates = dateIsos.map(iso => new Date(iso));
+    await prisma.trackedDay.deleteMany({
+      where: {
+        userId: userId,
+        vendorName: vendorName,
+        date: { in: dates }
       }
     });
   }

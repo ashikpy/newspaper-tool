@@ -12,13 +12,29 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String?
+  name      String?
+  
+  // Storing "recc. keys" as a JSON or String depending on use case. 
+  // Assuming these are some form of access or recommendation keys.
+  reccKeys  String?
+  
+  trackedDays TrackedDay[]
+
+  createdAt DateTime @default(now())
+}
+
 model TrackedDay {
   id         String   @id @default(cuid())
-  clerkId    String
+  userId     String
+  user       User     @relation(fields: [userId], references: [clerkId])
   date       DateTime @db.Date
   vendorName String
-  
+
   createdAt  DateTime @default(now())
 
-  @@unique([clerkId, date, vendorName])
+  @@unique([userId, date, vendorName])
 }

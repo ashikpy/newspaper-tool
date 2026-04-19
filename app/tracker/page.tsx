@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { UserButton, Show, SignInButton, useAuth } from "@clerk/nextjs";
-import { getTrackedDays, toggleTrackedDay } from "./actions";
+import { getTrackedDays, toggleTrackedDay, bulkTrackDays } from "./actions";
 
 // Helper to get calendar days
 function getDaysInMonth(year: number, month: number) {
@@ -19,6 +19,7 @@ export default function TrackerPage() {
   const { isSignedIn } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dbTracks, setDbTracks] = useState<{ id: string; date: string; vendorName: string }[]>([]);
+  const [lastClickedDate, setLastClickedDate] = useState<Date | null>(null);
   
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -43,6 +44,9 @@ export default function TrackerPage() {
   const blanks = Array.from({ length: firstDayOfWeek }, (_, i) => i);
 
   const getDayKey = (d: Date) =>
+    `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+
+  const getLocalDayKey = (d: Date) =>
     `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
   useEffect(() => {
@@ -57,35 +61,85 @@ export default function TrackerPage() {
     dbTracks.forEach(t => {
       if (t.vendorName === activeVendor.name) {
         const d = new Date(t.date);
-        map[getDayKey(d)] = true;
+        // Use UTC getters because we store as midday UTC
+        const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+        map[key] = true;
       }
     });
     return map;
   }, [dbTracks, activeVendor]);
 
-  const toggleDay = async (d: Date) => {
-    const key = getDayKey(d);
-    const currentlyTracked = trackedDays[key];
-    const dateIso = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12)).toISOString();
+  const toggleDay = async (d: Date, shiftKey: boolean = false) => {
+    // Current date 'd' is a local date from the calendar day.
+    // Convert it to midday UTC for consistent keying and storage.
+    const toMiddayUtc = (date: Date) => new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12));
+    
+    const targetUtc = toMiddayUtc(d);
+    const targetKey = getDayKey(targetUtc);
+    const currentlyTracked = !!trackedDays[targetKey];
 
-    // Optimistic UI update
-    setDbTracks((prev) => {
-      if (currentlyTracked) {
-        return prev.filter(t => {
-          const td = new Date(t.date);
-          return !(td.getFullYear() === d.getFullYear() && td.getMonth() === d.getMonth() && td.getDate() === d.getDate() && t.vendorName === activeVendor.name);
-        });
-      } else {
-        return [...prev, { id: 'temp-' + Date.now(), date: dateIso, vendorName: activeVendor.name }];
+    if (shiftKey && lastClickedDate) {
+      // Range selection
+      const startLocal = lastClickedDate < d ? lastClickedDate : d;
+      const endLocal = lastClickedDate < d ? d : lastClickedDate;
+      
+      const rangeDatesUtc: Date[] = [];
+      const tempLocal = new Date(startLocal);
+      while (tempLocal <= endLocal) {
+        rangeDatesUtc.push(toMiddayUtc(tempLocal));
+        tempLocal.setDate(tempLocal.getDate() + 1);
       }
-    });
 
-    try {
-       await toggleTrackedDay(dateIso, activeVendor.name);
-    } catch(e) {
-       // revert on failure by simply reloading
-       getTrackedDays(year, month).then(setDbTracks);
+      const dateIsos = rangeDatesUtc.map(rd => rd.toISOString());
+      const shouldTrack = !currentlyTracked;
+
+      // Optimistic bulk update
+      setDbTracks(prev => {
+        let filtered = prev;
+        if (!shouldTrack) {
+          filtered = prev.filter(t => {
+            const td = new Date(t.date);
+            const tdKey = getDayKey(td);
+            return !rangeDatesUtc.some(rd => getDayKey(rd) === tdKey && t.vendorName === activeVendor.name);
+          });
+        }
+        
+        if (shouldTrack) {
+           const newItems = rangeDatesUtc
+             .filter(rd => !trackedDays[getDayKey(rd)])
+             .map(rd => ({ id: 'temp-' + rd.getTime(), date: rd.toISOString(), vendorName: activeVendor.name }));
+           return [...filtered, ...newItems];
+        }
+        return filtered;
+      });
+
+      try {
+        await bulkTrackDays(dateIsos, activeVendor.name, shouldTrack);
+      } catch (e) {
+        getTrackedDays(year, month).then(setDbTracks);
+      }
+    } else {
+      // Single toggle
+      const iso = targetUtc.toISOString();
+      setDbTracks((prev) => {
+        if (currentlyTracked) {
+          return prev.filter(t => {
+            const td = new Date(t.date);
+            return !(getDayKey(td) === targetKey && t.vendorName === activeVendor.name);
+          });
+        } else {
+          return [...prev, { id: 'temp-' + Date.now(), date: iso, vendorName: activeVendor.name }];
+        }
+      });
+
+      try {
+        await toggleTrackedDay(iso, activeVendor.name);
+      } catch (e) {
+        getTrackedDays(year, month).then(setDbTracks);
+      }
     }
+    
+    setLastClickedDate(d);
   };
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
@@ -97,7 +151,10 @@ export default function TrackerPage() {
     let sundaysTracked = 0;
 
     daysInMonth.forEach((date) => {
-      if (trackedDays[getDayKey(date)]) {
+      // Use getLocalDayKey for objects in daysInMonth (which are local)
+      // Actually we should just convert daysInMonth objects to the UTC key for comparison
+      const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12));
+      if (trackedDays[getDayKey(utcDate)]) {
         if (date.getDay() === 0) sundaysTracked++;
         else normalDaysTracked++;
       }
@@ -235,16 +292,19 @@ export default function TrackerPage() {
                 {/* Active calendar days */}
                 {daysInMonth.map((date) => {
                   const dayNum = date.getDate();
+                  const nowIndia = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
                   const isToday =
-                    dayNum === new Date().getDate() &&
-                    date.getMonth() === new Date().getMonth() &&
-                    date.getFullYear() === new Date().getFullYear();
-                  const isTracked = trackedDays[getDayKey(date)];
+                    dayNum === nowIndia.getDate() &&
+                    date.getMonth() === nowIndia.getMonth() &&
+                    date.getFullYear() === nowIndia.getFullYear();
+                  
+                  const dUtc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12));
+                  const isTracked = trackedDays[getDayKey(dUtc)];
                   const isSunday = date.getDay() === 0;
                   return (
                     <button
                       key={dayNum}
-                      onClick={() => toggleDay(date)}
+                      onClick={(e) => toggleDay(date, e.shiftKey)}
                       className={`
                         aspect-square border-2 border-[#111] flex flex-col items-center justify-center relative transition-all active:translate-x-[2px] active:translate-y-[2px]
                         ${isToday ? "border-4 font-black shadow-[inner_0_0_10px_rgba(0,0,0,0.1)]" : "font-bold"}
