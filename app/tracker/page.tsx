@@ -270,28 +270,83 @@ export default function TrackerPage() {
                     </div>
                   </div>
                 </div>
-                <div
-                  className={`border-4 border-[#111] ${activeVendor.color} p-6 shadow-[2px_2px_0px_0px_#11111120] flex flex-col gap-4 text-center mt-4`}
-                >
-                  <h3 className="font-black uppercase text-xl border-b-2 border-[#111] pb-2">
-                    Estimated Pay
-                  </h3>
-                  <div className="flex justify-between font-bold text-sm bg-white border-2 border-[#111] p-2">
-                    <span>Regular (₹{activeVendor.normalPrice})</span>
-                    <span>x {currentMonthStats.normalDaysTracked}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-sm bg-white border-2 border-[#111] p-2">
-                    <span>Sunday (₹{activeVendor.sundayPrice})</span>
-                    <span>x {currentMonthStats.sundaysTracked}</span>
-                  </div>
-                  <div className="border-t-4 border-[#111] mt-2 pt-4">
-                    <div className="text-3xl font-black">
-                      ₹{currentMonthStats.totalCost}
+                {/* Receipt Billboard - New & Improved */}
+                <div className="relative mt-6 mb-8 mx-auto w-[90%] rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+                  {/* Top serrated edge */}
+                  <div 
+                    className="h-2 w-full bg-[#fcfaf2]"
+                    style={{
+                      WebkitMaskImage: "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
+                      WebkitMaskSize: "8px 8px",
+                      WebkitMaskRepeat: "repeat-x",
+                      maskImage: "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
+                      maskSize: "8px 8px",
+                      maskRepeat: "repeat-x"
+                    }}
+                  ></div>
+
+                  {/* Receipt Body */}
+                  <div className="bg-[#fcfaf2] p-6 pt-4 font-mono text-[13px] leading-tight text-[#333] border-x-2 border-[#ddd]">
+                    <div className="text-center mb-6">
+                      <div className="font-black text-lg tracking-tighter uppercase mb-1">
+                        ** NEWS CLIP **
+                      </div>
+                      <div className="text-[10px] uppercase opacity-70">
+                        Daily Newspaper Service<br/>
+                        EST. {new Date().getFullYear()}
+                      </div>
                     </div>
-                    <div className="text-sm font-bold uppercase tracking-wider mt-1">
-                      Total {monthName}
+                    
+                    <div className="border-y border-dashed border-[#888] py-3 my-4 space-y-2">
+                      <div className="flex justify-between font-bold">
+                        <span>DESCRIPTION</span>
+                        <span>QTY x RATE</span>
+                      </div>
+                      <div className="flex justify-between pt-1">
+                        <span>{activeVendor.name} (Reg)</span>
+                        <span>{currentMonthStats.normalDaysTracked} x ₹{activeVendor.normalPrice}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{activeVendor.name} (Sun)</span>
+                        <span>{currentMonthStats.sundaysTracked} x ₹{activeVendor.sundayPrice}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between text-base font-black border-b-2 border-[#111] pb-1">
+                      <span>TOTAL PAYABLE</span>
+                      <span>₹{currentMonthStats.totalCost}</span>
+                    </div>
+
+                    <div className="mt-6 flex flex-col items-center">
+                      <div className="flex gap-[1px] h-8 mb-2 overflow-hidden">
+                        {[4,2,6,1,8,3,5,2,4,7,2,3,6,1,9,4].map((h, i) => (
+                          <div key={i} className="bg-[#111] w-[2px]" style={{height: `${h * 10}%`}}></div>
+                        ))}
+                      </div>
+                      <div className="text-[9px] tracking-[4px] font-bold">
+                        001122334455
+                      </div>
+                      <div className="text-[10px] italic mt-4 opacity-70">
+                         {new Date().toLocaleString('en-IN', { dateStyle: 'full' })}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Bottom serrated edge */}
+                  <div 
+                    className="h-2 w-full bg-[#fcfaf2]"
+                    style={{
+                      WebkitMaskImage: "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
+                      WebkitMaskSize: "8px 8px",
+                      WebkitMaskRepeat: "repeat-x",
+                      WebkitMaskPosition: "bottom",
+                      maskImage: "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
+                      maskSize: "8px 8px",
+                      maskRepeat: "repeat-x",
+                      maskPosition: "bottom",
+                      transform: "rotate(180deg)"
+                    }}
+                  ></div>
                 </div>
               </div>
             </section>
