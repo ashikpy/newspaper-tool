@@ -13,18 +13,20 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String?
+  id        String         @id @default(cuid())
+  clerkId   String         @unique
+  email     String?        @unique
   name      String?
   
   // Storing "recc. keys" as a JSON or String depending on use case. 
   // Assuming these are some form of access or recommendation keys.
-  reccKeys  String?
+  reccKeys  String?        @default("[]")
   
-  trackedDays TrackedDay[]
+  trackedDays  TrackedDay[]
+  vendors      VendorConfig[]
 
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt @default(now())
 }
 
 model TrackedDay {
@@ -37,4 +39,16 @@ model TrackedDay {
   createdAt  DateTime @default(now())
 
   @@unique([userId, date, vendorName])
+}
+
+model VendorConfig {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [clerkId])
+  vendorName String
+  upiVpa     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, vendorName])
 }

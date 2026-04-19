@@ -5,17 +5,23 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
 async function syncUser(clerkId: string) {
+  if (!clerkId) return;
   const user = await currentUser();
   if (!user) return;
 
-  const email = user.emailAddresses[0]?.emailAddress;
-  const name = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+  const email = user.emailAddresses[0]?.emailAddress ?? null;
+  const name = `${user.firstName || ""} ${user.lastName || ""}`.trim() || null;
 
-  await prisma.user.upsert({
-    where: { clerkId },
-    update: { email, name },
-    create: { clerkId, email, name },
-  });
+  try {
+    await prisma.user.upsert({
+      where: { clerkId },
+      update: { email, name },
+      create: { clerkId, email, name },
+    });
+  } catch (error) {
+    console.error("UPSERT ERROR:", { clerkId, email, name });
+    throw error;
+  }
 }
 
 export async function getTrackedDays(year: number, month: number) {
@@ -113,4 +119,53 @@ export async function bulkTrackDays(dateIsos: string[], vendorName: string, shou
       }
     });
   }
+}
+
+export async function getVendorConfigs() {
+  const { userId } = await auth();
+  if (!userId) return [];
+  
+  await syncUser(userId);
+
+  // Robust lookup for the model property
+  const modelKey = Object.keys(prisma).find(k => k.toLowerCase() === "vendorconfig") || "vendorConfig";
+  const model = (prisma as any)[modelKey];
+
+  if (!model) {
+    console.error("CRITICAL: vendorConfig model not found on prisma client. Available keys:", Object.keys(prisma));
+    return [];
+  }
+
+  return await model.findMany({
+    where: { userId: userId }
+  });
+}
+
+export async function updateVendorConfig(vendorName: string, upiVpa: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  await syncUser(userId);
+
+  const modelKey = Object.keys(prisma).find(k => k.toLowerCase() === "vendorconfig") || "vendorConfig";
+  const model = (prisma as any)[modelKey];
+
+  if (!model) throw new Error("VendorConfig model not found");
+
+  await model.upsert({
+    where: {
+      userId_vendorName: {
+        userId: userId,
+        vendorName: vendorName
+      }
+    },
+    update: { upiVpa: upiVpa },
+    create: {
+      userId: userId,
+      vendorName: vendorName,
+      upiVpa: upiVpa
+    }
+  });
+
+  revalidatePath("/tracker");
 }

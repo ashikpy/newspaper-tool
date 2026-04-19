@@ -2,7 +2,12 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { UserButton, Show, SignInButton, useAuth } from "@clerk/nextjs";
-import { getTrackedDays, toggleTrackedDay, bulkTrackDays } from "./actions";
+import {
+  getTrackedDays,
+  toggleTrackedDay,
+  bulkTrackDays,
+  getVendorConfigs,
+} from "./actions";
 
 // Helper to get calendar days
 function getDaysInMonth(year: number, month: number) {
@@ -22,6 +27,9 @@ export default function TrackerPage() {
     { id: string; date: string; vendorName: string }[]
   >([]);
   const [lastClickedDate, setLastClickedDate] = useState<Date | null>(null);
+  const [vendorConfigs, setVendorConfigs] = useState<
+    { vendorName: string; upiVpa: string | null }[]
+  >([]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -79,6 +87,7 @@ export default function TrackerPage() {
   useEffect(() => {
     if (isSignedIn) {
       getTrackedDays(year, month).then(setDbTracks);
+      getVendorConfigs().then((configs) => setVendorConfigs(configs as any));
     }
   }, [year, month, isSignedIn]);
 
@@ -212,8 +221,15 @@ export default function TrackerPage() {
       normalDaysTracked * activeVendor.normalPrice +
       sundaysTracked * activeVendor.sundayPrice;
 
-    return { normalDaysTracked, sundaysTracked, totalCost };
-  }, [trackedDays, daysInMonth, activeVendor]);
+    const activeConfig = vendorConfigs.find(
+      (c) => c.vendorName === activeVendor.name,
+    );
+    const upiUri = activeConfig?.upiVpa
+      ? `upi://pay?pa=${activeConfig.upiVpa}&pn=${encodeURIComponent(activeVendor.name)}&am=${totalCost}&cu=INR`
+      : null;
+
+    return { normalDaysTracked, sundaysTracked, totalCost, upiUri };
+  }, [trackedDays, daysInMonth, activeVendor, vendorConfigs]);
 
   return (
     <div className="min-h-screen bg-newspaper-base p-4 md:p-8 text-[#111] font-body">
@@ -223,12 +239,36 @@ export default function TrackerPage() {
           <h1 className="text-4xl md:text-5xl font-black font-display">
             Newspaper Tracker
           </h1>
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* Newspaper Select in Navbar */}
+            <div className="relative w-fit">
+              <select
+                className="appearance-none border-2 border-[#111] bg-white pl-3 pr-8 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_#111] focus:outline-none cursor-pointer active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all w-full"
+                value={selectedVendorIdx}
+                onChange={(e) => setSelectedVendorIdx(Number(e.target.value))}
+              >
+                {vendors.map((v, i) => (
+                  <option key={i} value={i}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                <span className="font-black text-xs">↓</span>
+              </div>
+            </div>
+
+            <a
+              href="/profile"
+              className="border-2 border-[#111] bg-white px-4 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_#111] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
+            >
+              Set VPA
+            </a>
             <a
               href="/"
               className="border-2 border-[#111] bg-white px-4 py-2 font-bold uppercase shadow-[4px_4px_0px_0px_#111] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
             >
-              ← Back Home
+              ← Back
             </a>
             <Show when="signed-in">
               <div className="border-2 border-[#111] bg-white h-[42px] px-2 flex items-center justify-center shadow-[4px_4px_0px_0px_#111]">
@@ -249,39 +289,21 @@ export default function TrackerPage() {
                 </p>
               </div>
               <div className="p-6 flex flex-col gap-8">
-                <div className="flex flex-col gap-2">
-                  <label className="font-bold  text-sm">Select Newspaper</label>
-                  <div className="relative">
-                    <select
-                      className="w-full appearance-none border-4 border-[#111] bg-white p-3 font-bold uppercase shadow-[2px_2px_0px_0px_#11111120] focus:outline-none cursor-pointer"
-                      value={selectedVendorIdx}
-                      onChange={(e) =>
-                        setSelectedVendorIdx(Number(e.target.value))
-                      }
-                    >
-                      {vendors.map((v, i) => (
-                        <option key={i} value={i}>
-                          {v.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 border-l-4 border-[#111]">
-                      <span className="font-black">↓</span>
-                    </div>
-                  </div>
-                </div>
+                {/* Redundant select removed from here */}
                 {/* Receipt Billboard - New & Improved */}
                 <div className="relative mt-6 mb-8 mx-auto w-[90%] rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
                   {/* Top serrated edge */}
-                  <div 
+                  <div
                     className="h-2 w-full bg-[#fcfaf2]"
                     style={{
-                      WebkitMaskImage: "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
+                      WebkitMaskImage:
+                        "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
                       WebkitMaskSize: "8px 8px",
                       WebkitMaskRepeat: "repeat-x",
-                      maskImage: "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
+                      maskImage:
+                        "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
                       maskSize: "8px 8px",
-                      maskRepeat: "repeat-x"
+                      maskRepeat: "repeat-x",
                     }}
                   ></div>
 
@@ -292,11 +314,12 @@ export default function TrackerPage() {
                         ** NEWS CLIP **
                       </div>
                       <div className="text-[10px] uppercase opacity-70">
-                        Daily Newspaper Service<br/>
+                        Daily Newspaper Service
+                        <br />
                         EST. {new Date().getFullYear()}
                       </div>
                     </div>
-                    
+
                     <div className="border-y border-dashed border-[#888] py-3 my-4 space-y-2">
                       <div className="flex justify-between font-bold">
                         <span>DESCRIPTION</span>
@@ -304,11 +327,17 @@ export default function TrackerPage() {
                       </div>
                       <div className="flex justify-between pt-1">
                         <span>{activeVendor.name} (Reg)</span>
-                        <span>{currentMonthStats.normalDaysTracked} x ₹{activeVendor.normalPrice}</span>
+                        <span>
+                          {currentMonthStats.normalDaysTracked} x ₹
+                          {activeVendor.normalPrice}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>{activeVendor.name} (Sun)</span>
-                        <span>{currentMonthStats.sundaysTracked} x ₹{activeVendor.sundayPrice}</span>
+                        <span>
+                          {currentMonthStats.sundaysTracked} x ₹
+                          {activeVendor.sundayPrice}
+                        </span>
                       </div>
                     </div>
 
@@ -317,34 +346,61 @@ export default function TrackerPage() {
                       <span>₹{currentMonthStats.totalCost}</span>
                     </div>
 
-                    <div className="mt-6 flex flex-col items-center">
-                      <div className="flex gap-[1px] h-8 mb-2 overflow-hidden">
-                        {[4,2,6,1,8,3,5,2,4,7,2,3,6,1,9,4].map((h, i) => (
-                          <div key={i} className="bg-[#111] w-[2px]" style={{height: `${h * 10}%`}}></div>
-                        ))}
+                    {currentMonthStats.upiUri && (
+                      <div className="mt-6 flex flex-col items-center gap-2">
+                        <div className="relative w-[100px] h-[100px] bg-gray-100 flex items-center justify-center  overflow-hidden">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(currentMonthStats.upiUri)}`}
+                            alt="Payment QR"
+                            className="w-[100px] h-[100px] transition-opacity duration-300"
+                            loading="lazy"
+                            onLoad={(e) =>
+                              (e.currentTarget.style.opacity = "1")
+                            }
+                            style={{ opacity: 0 }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center -z-10 animate-pulse bg-gray-50 text-[8px] font-bold uppercase opacity-30 text-center px-1">
+                            Loading QR...
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase opacity-60">
+                          Scan to Pay UPI
+                        </span>
+                        {/* Display VPA from config */}
+                        <span className="text-[10px] font-bold uppercase text-neo-red">
+                          {
+                            vendorConfigs.find(
+                              (c) => c.vendorName === activeVendor.name,
+                            )?.upiVpa
+                          }
+                        </span>
                       </div>
-                      <div className="text-[9px] tracking-[4px] font-bold">
-                        001122334455
-                      </div>
-                      <div className="text-[10px] italic mt-4 opacity-70">
-                         {new Date().toLocaleString('en-IN', { dateStyle: 'full' })}
+                    )}
+
+                    <div className="mt-6 flex flex-col items-center text-center">
+                      <div className="text-[10px] italic opacity-70">
+                        {new Date().toLocaleString("en-IN", {
+                          dateStyle: "full",
+                        })}
                       </div>
                     </div>
                   </div>
 
                   {/* Bottom serrated edge */}
-                  <div 
+                  <div
                     className="h-2 w-full bg-[#fcfaf2]"
                     style={{
-                      WebkitMaskImage: "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
+                      WebkitMaskImage:
+                        "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
                       WebkitMaskSize: "8px 8px",
                       WebkitMaskRepeat: "repeat-x",
                       WebkitMaskPosition: "bottom",
-                      maskImage: "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
+                      maskImage:
+                        "linear-gradient(-45deg, transparent 4px, #000 0), linear-gradient(45deg, transparent 4px, #000 0)",
                       maskSize: "8px 8px",
                       maskRepeat: "repeat-x",
                       maskPosition: "bottom",
-                      transform: "rotate(180deg)"
+                      transform: "rotate(180deg)",
                     }}
                   ></div>
                 </div>
