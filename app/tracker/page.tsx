@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { useState, useMemo, useEffect } from "react";
+import { UserButton, Show, SignInButton, useAuth } from "@clerk/nextjs";
+import { getTrackedDays, toggleTrackedDay } from "./actions";
 
 // Helper to get calendar days
 function getDaysInMonth(year: number, month: number) {
@@ -15,46 +16,21 @@ function getDaysInMonth(year: number, month: number) {
 }
 
 export default function TrackerPage() {
+  const { isSignedIn } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [dbTracks, setDbTracks] = useState<{ id: string; date: string; vendorName: string }[]>([]);
+  
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
   const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
 
-  // Format: "YYYY-MM-DD": boolean
-  const [trackedDays, setTrackedDays] = useState<Record<string, boolean>>({});
-
   const vendors = [
-    {
-      name: "The Hindu",
-      color: "bg-neo-yellow",
-      normalPrice: 7,
-      sundayPrice: 10,
-    },
-    {
-      name: "Times of India",
-      color: "bg-white",
-      normalPrice: 6,
-      sundayPrice: 8,
-    },
-    {
-      name: "The New Indian Express",
-      color: "bg-neo-blue",
-      normalPrice: 5,
-      sundayPrice: 7,
-    },
-    {
-      name: "Daily Thanthi",
-      color: "bg-neo-red",
-      normalPrice: 5,
-      sundayPrice: 6,
-    },
-    {
-      name: "Dinamalar",
-      color: "bg-neo-yellow",
-      normalPrice: 6,
-      sundayPrice: 8,
-    },
+    { name: "The Hindu", color: "bg-neo-yellow", normalPrice: 7, sundayPrice: 10 },
+    { name: "Times of India", color: "bg-white", normalPrice: 6, sundayPrice: 8 },
+    { name: "The New Indian Express", color: "bg-neo-blue", normalPrice: 5, sundayPrice: 7 },
+    { name: "Daily Thanthi", color: "bg-neo-red", normalPrice: 5, sundayPrice: 6 },
+    { name: "Dinamalar", color: "bg-neo-yellow", normalPrice: 6, sundayPrice: 8 },
     { name: "Dinakaran", color: "bg-white", normalPrice: 5, sundayPrice: 7 },
   ];
 
@@ -69,21 +45,51 @@ export default function TrackerPage() {
   const getDayKey = (d: Date) =>
     `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
-  const toggleDay = (d: Date) => {
+  useEffect(() => {
+    if (isSignedIn) {
+      getTrackedDays(year, month).then(setDbTracks);
+    }
+  }, [year, month, isSignedIn]);
+
+  // Derived state mapping tracked days for the CURRENT active vendor
+  const trackedDays = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    dbTracks.forEach(t => {
+      if (t.vendorName === activeVendor.name) {
+        const d = new Date(t.date);
+        map[getDayKey(d)] = true;
+      }
+    });
+    return map;
+  }, [dbTracks, activeVendor]);
+
+  const toggleDay = async (d: Date) => {
     const key = getDayKey(d);
-    setTrackedDays((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    const currentlyTracked = trackedDays[key];
+    const dateIso = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12)).toISOString();
+
+    // Optimistic UI update
+    setDbTracks((prev) => {
+      if (currentlyTracked) {
+        return prev.filter(t => {
+          const td = new Date(t.date);
+          return !(td.getFullYear() === d.getFullYear() && td.getMonth() === d.getMonth() && td.getDate() === d.getDate() && t.vendorName === activeVendor.name);
+        });
+      } else {
+        return [...prev, { id: 'temp-' + Date.now(), date: dateIso, vendorName: activeVendor.name }];
+      }
+    });
+
+    try {
+       await toggleTrackedDay(dateIso, activeVendor.name);
+    } catch(e) {
+       // revert on failure by simply reloading
+       getTrackedDays(year, month).then(setDbTracks);
+    }
   };
 
-  const prevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
-  };
-
-  const nextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
-  };
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
   // Calculate stats for current month
   const currentMonthStats = useMemo(() => {
@@ -91,19 +97,13 @@ export default function TrackerPage() {
     let sundaysTracked = 0;
 
     daysInMonth.forEach((date) => {
-      const key = getDayKey(date);
-      if (trackedDays[key]) {
-        if (date.getDay() === 0) {
-          sundaysTracked++;
-        } else {
-          normalDaysTracked++;
-        }
+      if (trackedDays[getDayKey(date)]) {
+        if (date.getDay() === 0) sundaysTracked++;
+        else normalDaysTracked++;
       }
     });
 
-    const totalCost =
-      normalDaysTracked * activeVendor.normalPrice +
-      sundaysTracked * activeVendor.sundayPrice;
+    const totalCost = normalDaysTracked * activeVendor.normalPrice + sundaysTracked * activeVendor.sundayPrice;
 
     return { normalDaysTracked, sundaysTracked, totalCost };
   }, [trackedDays, daysInMonth, activeVendor]);
@@ -123,16 +123,15 @@ export default function TrackerPage() {
             >
               ← Back Home
             </a>
-            <SignedIn>
+            <Show when="signed-in">
               <div className="border-2 border-[#111] bg-white h-[42px] px-2 flex items-center justify-center shadow-[4px_4px_0px_0px_#111]">
                 <UserButton />
               </div>
-            </SignedIn>
+            </Show>
           </div>
         </header>
 
-        <SignedIn>
-
+        <Show when="signed-in">
         <div className="flex flex-col lg:flex-row flex-1 divide-y-4 lg:divide-y-0 lg:divide-x-4 divide-[#111]">
           {/* Sidebar Section */}
           <section className="lg:w-1/3 flex flex-col bg-newspaper-base border-b-4 lg:border-b-0 border-[#111]">
@@ -142,7 +141,6 @@ export default function TrackerPage() {
                 Select your paper and track costs.
               </p>
             </div>
-
             <div className="p-6 flex flex-col gap-8">
               <div className="flex flex-col gap-2">
                 <label className="font-bold uppercase text-sm">
@@ -167,24 +165,20 @@ export default function TrackerPage() {
                   </div>
                 </div>
               </div>
-
               <div
                 className={`border-4 border-[#111] ${activeVendor.color} p-6 shadow-[2px_2px_0px_0px_#11111120] flex flex-col gap-4 text-center mt-4`}
               >
                 <h3 className="font-black uppercase text-xl border-b-2 border-[#111] pb-2">
                   Estimated Pay
                 </h3>
-
                 <div className="flex justify-between font-bold text-sm bg-white border-2 border-[#111] p-2">
                   <span>Regular (₹{activeVendor.normalPrice})</span>
                   <span>x {currentMonthStats.normalDaysTracked}</span>
                 </div>
-
                 <div className="flex justify-between font-bold text-sm bg-white border-2 border-[#111] p-2">
                   <span>Sunday (₹{activeVendor.sundayPrice})</span>
                   <span>x {currentMonthStats.sundaysTracked}</span>
                 </div>
-
                 <div className="border-t-4 border-[#111] mt-2 pt-4">
                   <div className="text-3xl font-black">
                     ₹{currentMonthStats.totalCost}
@@ -196,7 +190,6 @@ export default function TrackerPage() {
               </div>
             </div>
           </section>
-
           {/* Calendar Section */}
           <section className="lg:w-2/3 flex flex-col bg-white">
             <div className="p-6 border-b-4 border-[#111] flex justify-between items-center bg-neo-blue flex-wrap gap-4">
@@ -218,7 +211,6 @@ export default function TrackerPage() {
                 </button>
               </div>
             </div>
-
             <div className="p-6 flex-1 flex flex-col">
               <div className="grid grid-cols-7 gap-2 md:gap-4 mb-4">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
@@ -232,7 +224,6 @@ export default function TrackerPage() {
                   ),
                 )}
               </div>
-
               <div className="grid grid-cols-7 gap-2 md:gap-4 flex-1">
                 {/* Empty slots for days before the 1st */}
                 {blanks.map((blank) => (
@@ -241,7 +232,6 @@ export default function TrackerPage() {
                     className="p-2 border-2 border-transparent"
                   ></div>
                 ))}
-
                 {/* Active calendar days */}
                 {daysInMonth.map((date) => {
                   const dayNum = date.getDate();
@@ -251,7 +241,6 @@ export default function TrackerPage() {
                     date.getFullYear() === new Date().getFullYear();
                   const isTracked = trackedDays[getDayKey(date)];
                   const isSunday = date.getDay() === 0;
-
                   return (
                     <button
                       key={dayNum}
@@ -273,9 +262,9 @@ export default function TrackerPage() {
             </div>
           </section>
         </div>
-        </SignedIn>
+        </Show>
         
-        <SignedOut>
+        <Show when="signed-out">
           <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-neo-yellow">
             <h2 className="text-3xl font-black uppercase mb-4">Tracking Requires Subscription!</h2>
             <p className="font-bold mb-6">Sign in to start tracking your daily reading limits.</p>
@@ -285,7 +274,7 @@ export default function TrackerPage() {
               </button>
             </SignInButton>
           </div>
-        </SignedOut>
+        </Show>
       </main>
     </div>
   );

@@ -12,8 +12,13 @@ datasource db {
   provider = "postgresql"
 }
 
-model Dummy {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
+model TrackedDay {
+  id         String   @id @default(cuid())
+  clerkId    String
+  date       DateTime @db.Date
+  vendorName String
+  
+  createdAt  DateTime @default(now())
+
+  @@unique([clerkId, date, vendorName])
 }
