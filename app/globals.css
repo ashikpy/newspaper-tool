@@ -29,3 +29,22 @@ h1, h2, h3, h4, h5, h6 {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+
+.wavy-box {
+  --s: 4px;
+  /* tile = 4*--s = 16px. width: 160=16*10 ✓  height: 48=16*3 ✓ */
+  width: 160px;
+  height: 48px;
+  padding: var(--s);
+  border: var(--s) solid transparent;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  mask:
+    radial-gradient(calc(1.414 * var(--s)), #000 calc(100% - 1px), #0000),
+    conic-gradient(#000 0 0) content-box,
+    radial-gradient(calc(1.414 * var(--s)), #0000 100%, #000 calc(100% + 1px))
+      var(--s) var(--s) padding-box;
+  mask-size: calc(var(--s) * 4) calc(var(--s) * 4);
+}

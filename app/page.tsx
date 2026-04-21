@@ -252,6 +252,25 @@ export default async function Home() {
                   </a>
                 </li>
               </ul>
+
+              {/* The Stamp (Wavy Box Edition) */}
+              <div className="mt-8">
+                <button className="wavy-box bg-neo-red hover:bg-[#111] transition-colors group cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-[#111] text-white p-1 rounded-full group-hover:bg-neo-red group-hover:text-[#111] transition-colors">
+                      <IoFlash className="text-[10px]" />
+                    </div>
+                    <div className="text-left leading-none uppercase">
+                      <div className="text-[9px] font-black tracking-tight text-[#111] group-hover:text-white">
+                        Join Archive
+                      </div>
+                      <div className="text-[7px] font-bold opacity-70 text-[#111] group-hover:text-white">
+                        $5/mo • Access
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* Column 3: Stats */}
@@ -292,7 +311,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="border-t-4 border-[#333] p-4 text-center">
+          <div className="border-t-4 border-[#333] p-6 flex flex-col md:flex-row items-center justify-center">
             <p className="font-mono font-bold uppercase text-[10px] tracking-widest text-gray-500 flex items-center justify-center gap-4">
               <span>© {new Date().getFullYear()} BRUTALIST_TOOLKIT</span>
               <span className="w-1 h-1 bg-gray-500 rotate-45"></span>
