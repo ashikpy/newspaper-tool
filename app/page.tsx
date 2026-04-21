@@ -255,16 +255,16 @@ export default async function Home() {
 
               {/* The Stamp (Wavy Box Edition) */}
               <div className="mt-8">
-                <button className="wavy-box bg-neo-red hover:bg-[#111] transition-colors group cursor-pointer">
+                <button className="wavy-box bg-neo-red  transition-colors  cursor-pointer">
                   <div className="flex items-center gap-2">
-                    <div className="bg-[#111] text-white p-1 rounded-full group-hover:bg-neo-red group-hover:text-[#111] transition-colors">
+                    <div className="bg-[#111] text-white p-1 rounded-full   transition-colors">
                       <IoFlash className="text-[10px]" />
                     </div>
                     <div className="text-left leading-none uppercase">
-                      <div className="text-[9px] font-black tracking-tight text-[#111] group-hover:text-white">
+                      <div className="text-[9px] font-black tracking-tight text-[#111] ">
                         Join Archive
                       </div>
-                      <div className="text-[7px] font-bold opacity-70 text-[#111] group-hover:text-white">
+                      <div className="text-[7px] font-bold opacity-70 text-[#111] ">
                         $5/mo • Access
                       </div>
                     </div>
