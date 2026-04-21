@@ -1,16 +1,37 @@
 import Image from "next/image";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 
-export default function Home() {
+export default async function Home() {
+  const user = await currentUser();
   return (
     <div className="min-h-screen bg-newspaper-base p-4 md:p-8 text-[#111]">
       <main className="max-w-7xl mx-auto border-4 border-[#111] bg-white shadow-[8px_8px_0px_0px_#111] flex flex-col">
         {/* Header / Masthead */}
         <header className="border-b-4 border-[#111] p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center bg-neo-yellow gap-4 relative overflow-hidden">
+          {/* base bg */}
+          <div className="absolute inset-0 bg-neo-yellow" />
+
+          {/* right-side pattern with fade */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: "url('/header-pattern.svg')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "10px 10px",
+              maskImage:
+                "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 50%, black 100%)",
+              WebkitMaskImage:
+                "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 50%, black 100%)",
+              opacity: 0.8,
+            }}
+          />
+
           <div className="flex flex-col z-10 text-center md:text-left">
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-none mb-2">
               The Brutalist Daily
             </h1>
+
             <p className="font-bold text-lg md:text-xl uppercase border-y-2 border-[#111] py-1 inline-block text-gray-800">
               Volume I • Issue 1 • Pastel Edition
             </p>
@@ -22,25 +43,32 @@ export default function Home() {
                 href="/tracker"
                 className="border-2 border-[#111] bg-white hover:bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block"
               >
-                <span className="hidden md:block">Go to</span> Tracker
+                <span className="hidden md:inline-block">Go to</span> Tracker
               </a>
-              <div className="flex justify-center border-2 border-[#111] bg-white py-1 px-3 shadow-[4px_4px_0px_0px_#111]">
+
+              <div className="flex justify-center border-2 border-[#111] bg-white py-2 px-3 shadow-[4px_4px_0px_0px_#111] items-center gap-2">
                 <UserButton />
+                <p className="text-sm text-center font-bold uppercase">
+                  {user?.firstName} {user?.lastName}
+                </p>
               </div>
             </Show>
+
             <Show when="signed-out">
               <SignInButton mode="modal">
                 <button className="border-2 border-[#111] bg-white hover:bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block w-full">
                   Sign In
                 </button>
               </SignInButton>
+
               <SignUpButton mode="modal">
                 <button className="border-2 border-[#111] bg-[#111] text-white hover:bg-white hover:text-[#111] py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block w-full mt-2">
                   Subscribe (Sign Up)
                 </button>
               </SignUpButton>
             </Show>
-            <div className="border-2 border-[#111] bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center mt-2">
+
+            <div className="border-2 border-[#111] bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center">
               {new Date().toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
@@ -119,7 +147,7 @@ export default function Home() {
 
             {/* Sidebar Article 2 / Ad block */}
             <div className="p-6 flex-1 flex flex-col">
-              <div className="border-4 border-[#111] bg-neo-red p-6 h-full flex flex-col items-center justify-center text-center shadow-[6px_6px_0px_0px_#111] group hover:bg-white hover:text-[#111] transition-colors cursor-pointer text-[#111]">
+              <div className="border-4 border-[#111] bg-neo-red p-6 h-full flex flex-col items-center justify-center text-center shadow-[6px_6px_0px_0px_#111] group  hover:text-[#111] transition-colors cursor-pointer text-[#111] bg-[url('/archive-pattern.svg')] bg-repeat bg-size-[400px_400px]">
                 <h4 className="text-3xl font-black uppercase mb-2">
                   Join Archive
                 </h4>
