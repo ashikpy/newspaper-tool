@@ -8,6 +8,8 @@ import {
   bulkTrackDays,
   getVendorConfigs,
 } from "./actions";
+import { toBlob } from "html-to-image";
+import { IoCopySharp, IoCheckmarkSharp } from "react-icons/io5";
 
 // Helper to get calendar days
 function getDaysInMonth(year: number, month: number) {
@@ -54,6 +56,37 @@ export default function TrackerPage() {
   const [vendorConfigs, setVendorConfigs] = useState<
     { vendorName: string; upiVpa: string | null }[]
   >([]);
+  const [isCopying, setIsCopying] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const handleCopyReceipt = async () => {
+    const el = document.getElementById("screenshot-target");
+    if (!el) return;
+
+    try {
+      setIsCopying(true);
+      const blob = await toBlob(el, {
+        backgroundColor: "#faf8f5",
+        pixelRatio: 2,
+        skipFonts: true, // Bypass the 'normalizeFontFamily' bug
+        style: {
+          // Force apply fonts in case skipping font embedding loses them
+          fontFamily: "var(--font-body)",
+        },
+      });
+
+      if (blob) {
+        const item = new ClipboardItem({ "image/png": blob });
+        await navigator.clipboard.write([item]);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      }
+    } catch (err) {
+      console.error("Failed to copy receipt:", err);
+    } finally {
+      setIsCopying(false);
+    }
+  };
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -311,8 +344,24 @@ export default function TrackerPage() {
                 <p className="text-sm font-bold text-gray-600 mt-1">
                   Select your paper and track costs.
                 </p>
+                <button
+                  onClick={handleCopyReceipt}
+                  disabled={isCopying}
+                  className={`mt-4 w-full flex items-center justify-center gap-2 border-2 border-[#111] py-2 font-black uppercase text-xs transition-all shadow-[4px_4px_0px_0px_#111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50 ${copySuccess ? "bg-neo-blue" : "bg-white hover:bg-neo-yellow"}`}
+                >
+                  {copySuccess ? (
+                    <>
+                      <IoCheckmarkSharp className="text-sm" /> Copied!
+                    </>
+                  ) : (
+                    <>
+                      <IoCopySharp className="text-sm" />
+                      {isCopying ? "Snapping..." : "Snap & Copy Receipt"}
+                    </>
+                  )}
+                </button>
               </div>
-              <div className="p-6 flex flex-col gap-8">
+              <div className="p-6 flex flex-col gap-8 " id="screenshot-target">
                 {/* Redundant select removed from here */}
                 {/* Receipt Billboard - New & Improved */}
                 <div className="relative mt-6 mb-8 mx-auto w-[90%] rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
@@ -332,12 +381,12 @@ export default function TrackerPage() {
                   ></div>
 
                   {/* Receipt Body */}
-                  <div className="bg-[#fcfaf2] p-6 pt-4 font-mono text-[13px] leading-tight text-[#333] border-x-2 border-[#ddd]">
+                  <div className="bg-[#fcfaf2] p-6 pt-4 font-mono text-[11px] leading-tight text-[#333] border-x-2 border-[#ddd]">
                     <div className="text-center mb-6">
-                      <div className="font-black text-lg tracking-tighter uppercase mb-1">
+                      <div className="font-black text-base tracking-tighter uppercase mb-1">
                         ** NEWS CLIP **
                       </div>
-                      <div className="text-[10px] uppercase opacity-70">
+                      <div className="text-[9px] uppercase opacity-70">
                         Daily Newspaper Service
                         <br />
                         EST. {new Date().getFullYear()}
@@ -349,25 +398,29 @@ export default function TrackerPage() {
                         <span>DESCRIPTION</span>
                         <span>QTY x RATE</span>
                       </div>
-                      <div className="flex justify-between pt-1">
-                        <span>{activeVendor.name} (Reg)</span>
-                        <span>
+                      <div className="flex justify-between pt-1 gap-2">
+                        <span className="truncate">
+                          {activeVendor.name} (Reg)
+                        </span>
+                        <span className="whitespace-nowrap flex-shrink-0">
                           {currentMonthStats.normalDaysTracked} x ₹
                           {activeVendor.normalPrice}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>{activeVendor.name} (Sun)</span>
-                        <span>
+                      <div className="flex justify-between gap-2">
+                        <span className="truncate">
+                          {activeVendor.name} (Sun)
+                        </span>
+                        <span className="whitespace-nowrap flex-shrink-0">
                           {currentMonthStats.sundaysTracked} x ₹
                           {activeVendor.sundayPrice}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex justify-between text-base font-black border-b-2 border-[#111] pb-1">
+                    <div className="flex justify-between text-sm font-black border-b-2 border-[#111] pb-1">
                       <span>TOTAL PAYABLE</span>
-                      <span>₹{currentMonthStats.totalCost}</span>
+                      <span className="whitespace-nowrap">₹{currentMonthStats.totalCost}</span>
                     </div>
 
                     {/* Fixed-height Payment Section to prevent layout shift */}
