@@ -57,3 +57,14 @@ h6 {
       var(--s) var(--s) padding-box;
   mask-size: calc(var(--s) * 4) calc(var(--s) * 4);
 }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@utility animate-shimmer {
+  background: linear-gradient(90deg, #fcfaf2 25%, #f4f2ea 50%, #fcfaf2 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

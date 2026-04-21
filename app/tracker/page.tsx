@@ -20,6 +20,30 @@ function getDaysInMonth(year: number, month: number) {
   return days;
 }
 
+function PaymentReceiptQR({ upiUri }: { upiUri: string }) {
+  const [qrLoaded, setQrLoaded] = useState(false);
+
+  // Reset loading state when URI changes
+  useEffect(() => {
+    setQrLoaded(false);
+  }, [upiUri]);
+
+  return (
+    <div
+      className={`relative w-[120px] h-[120px] border-2 border-[#111] bg-white flex items-center justify-center overflow-hidden shadow-[4px_4px_0px_0px_#111] ${!qrLoaded ? "animate-shimmer" : ""}`}
+    >
+      <img
+        src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(upiUri)}`}
+        alt="Payment QR"
+        key={upiUri} // Force re-render/re-load on URI change
+        className={`w-[100px] h-[100px] transition-opacity duration-500 ${qrLoaded ? "opacity-100" : "opacity-0"}`}
+        loading="lazy"
+        onLoad={() => setQrLoaded(true)}
+      />
+    </div>
+  );
+}
+
 export default function TrackerPage() {
   const { isSignedIn } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -346,36 +370,31 @@ export default function TrackerPage() {
                       <span>₹{currentMonthStats.totalCost}</span>
                     </div>
 
-                    {currentMonthStats.upiUri && (
-                      <div className="mt-6 flex flex-col items-center gap-2">
-                        <div className="relative w-[100px] h-[100px] bg-gray-100 flex items-center justify-center  overflow-hidden">
-                          <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(currentMonthStats.upiUri)}`}
-                            alt="Payment QR"
-                            className="w-[100px] h-[100px] transition-opacity duration-300"
-                            loading="lazy"
-                            onLoad={(e) =>
-                              (e.currentTarget.style.opacity = "1")
+                    {/* Fixed-height Payment Section to prevent layout shift */}
+                    <div className="mt-6 border-t border-dashed border-[#ccc] pt-6 flex flex-col items-center justify-center min-h-[180px]">
+                      {currentMonthStats.upiUri ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <PaymentReceiptQR upiUri={currentMonthStats.upiUri} />
+                          <span className="text-[10px] font-bold uppercase opacity-60 mt-1">
+                            Scan to Pay UPI
+                          </span>
+                          <span className="text-[10px] font-bold uppercase text-neo-red truncate max-w-[150px]">
+                            {
+                              vendorConfigs.find(
+                                (c) => c.vendorName === activeVendor.name,
+                              )?.upiVpa
                             }
-                            style={{ opacity: 0 }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center -z-10 animate-pulse bg-gray-50 text-[8px] font-bold uppercase opacity-30 text-center px-1">
-                            Loading QR...
-                          </div>
+                          </span>
                         </div>
-                        <span className="text-[10px] font-bold uppercase opacity-60">
-                          Scan to Pay UPI
-                        </span>
-                        {/* Display VPA from config */}
-                        <span className="text-[10px] font-bold uppercase text-neo-red">
-                          {
-                            vendorConfigs.find(
-                              (c) => c.vendorName === activeVendor.name,
-                            )?.upiVpa
-                          }
-                        </span>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 opacity-40">
+                          <div className="w-[120px] h-[120px] border-2 border-dashed border-[#ccc] animate-shimmer" />
+                          <span className="text-[10px] font-bold uppercase">
+                            Waiting for billing...
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="mt-6 flex flex-col items-center text-center">
                       <div className="text-[10px] italic opacity-70">
