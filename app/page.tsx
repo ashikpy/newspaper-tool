@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
+import { IoCompassSharp, IoFlash, IoLibrary, IoStar } from "react-icons/io5";
 
 export default async function Home() {
   const user = await currentUser();
@@ -10,8 +11,8 @@ export default async function Home() {
         {/* Header / Masthead */}
         <header className="border-b-4 border-[#111] p-6 lg:p-8 flex flex-col md:flex-row justify-between items-center bg-neo-yellow gap-4 relative overflow-hidden">
           {/* base bg */}
-          <div className="absolute inset-0 bg-neo-yellow" />
 
+          <div className="absolute inset-0 bg-neo-yellow" />
           {/* right-side pattern with fade */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -26,17 +27,30 @@ export default async function Home() {
               opacity: 0.8,
             }}
           />
-
+          {/* top running marquee */}
+          <div className="absolute top-0 left-0 w-full bg-[#111] text-white py-1 overflow-hidden z-20 border-b-2 border-[#111]">
+            <div className="flex whitespace-nowrap animate-marquee font-mono text-[10px] uppercase font-black tracking-widest leading-none items-center">
+              {[...Array(10)].map((_, i) => (
+                <span key={i} className="mx-4 flex items-center gap-2">
+                  <IoFlash className="text-neo-yellow" />
+                  Breaking: New Brutalism is here
+                  <IoStar className="text-neo-blue" />
+                  Limited Edition Archive Access Available
+                  <IoLibrary className="text-neo-red" />
+                  Stay Bold •
+                </span>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col z-10 text-center md:text-left">
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-none mb-2">
               The Brutalist Daily
             </h1>
 
-            <p className="font-bold text-lg md:text-xl uppercase border-y-2 border-[#111] py-1 inline-block text-gray-800">
+            <p className="font-bold text-lg md:text-xl uppercase border-y-2 border-[#111] py-1 inline-block text-gray-800 w-max">
               Volume I • Issue 1 • Pastel Edition
             </p>
           </div>
-
           <div className="flex md:flex-col gap-2 z-10 shrink-0">
             <Show when="signed-in">
               <a
@@ -153,9 +167,11 @@ export default async function Home() {
                   System.Archive.v1
                 </div>
 
-                <div className="mb-6 z-10">
+                <div className="mb-2 z-10">
                   <div className="w-16 h-16 border-4 border-[#111] bg-white rounded-full flex items-center justify-center shadow-[4px_4px_0px_0px_#111] mb-4 mx-auto group-hover:rotate-12 transition-transform">
-                    <span className="text-2xl font-black">†</span>
+                    <span className="text-4xl font-black">
+                      <IoCompassSharp />
+                    </span>
                   </div>
                 </div>
 
@@ -192,11 +208,99 @@ export default async function Home() {
         </div>
 
         {/* Footer */}
-        <footer className="border-t-4 border-[#111] p-4 bg-[#111] text-white text-center">
-          <p className="font-body font-bold uppercase text-sm">
-            © {new Date().getFullYear()} The Brutalist Archive. Form follows
-            function.
-          </p>
+        <footer className="border-t-4 border-[#111] bg-[#111] text-white">
+          <div className="grid grid-cols-1 md:grid-cols-4 divide-y-4 md:divide-y-0 md:divide-x-4 divide-[#333]">
+            {/* Column 1: Brand */}
+            <div className="p-8">
+              <h2 className="text-3xl font-black uppercase mb-4 tracking-tighter leading-none">
+                The <br /> Brutalist <br /> Daily
+              </h2>
+              <p className="font-body text-xs font-bold text-gray-400 uppercase leading-relaxed">
+                Documenting the raw structure of digital existence since 20XX.
+                Form follows function, always.
+              </p>
+            </div>
+
+            {/* Column 2: Nav */}
+            <div className="p-8">
+              <h4 className="font-mono text-xs font-black uppercase mb-6 text-neo-yellow underline underline-offset-4">
+                Directory
+              </h4>
+              <ul className="space-y-2 font-black uppercase text-sm">
+                <li>
+                  <a
+                    href="/"
+                    className="hover:text-neo-blue transition-colors flex items-center gap-2"
+                  >
+                    <IoFlash className="text-xs" /> Archives
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/tracker"
+                    className="hover:text-neo-yellow transition-colors flex items-center gap-2"
+                  >
+                    <IoCompassSharp className="text-xs" /> Tracker
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/profile"
+                    className="hover:text-neo-red transition-colors flex items-center gap-2"
+                  >
+                    <IoLibrary className="text-xs" /> Settings
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 3: Stats */}
+            <div className="p-8">
+              <h4 className="font-mono text-xs font-black uppercase mb-6 text-neo-blue underline underline-offset-4">
+                Transmission
+              </h4>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-2xl font-black leading-none">99.9%</div>
+                  <div className="text-[10px] font-bold text-gray-500 uppercase">
+                    Uptime Integrity
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black leading-none">
+                    {new Date().getFullYear()}
+                  </div>
+                  <div className="text-[10px] font-bold text-gray-500 uppercase">
+                    Current Era
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 4: Newsletter/Note */}
+            <div className="p-8 bg-zinc-900">
+              <h4 className="font-mono text-xs font-black uppercase mb-6 text-neo-red underline underline-offset-4">
+                Final Word
+              </h4>
+              <p className="font-body text-xs mb-6 text-gray-300 italic">
+                "Structure is the only truth. Colors are just temporary
+                distractions."
+              </p>
+              <div className="border-2 border-white p-2 text-center text-[10px] font-black uppercase hover:bg-white hover:text-black transition-all cursor-crosshair">
+                Return to Top
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t-4 border-[#333] p-4 text-center">
+            <p className="font-mono font-bold uppercase text-[10px] tracking-widest text-gray-500 flex items-center justify-center gap-4">
+              <span>© {new Date().getFullYear()} BRUTALIST_TOOLKIT</span>
+              <span className="w-1 h-1 bg-gray-500 rotate-45"></span>
+              <span>EST. {new Date().getFullYear()}</span>
+              <span className="w-1 h-1 bg-gray-500 rotate-45"></span>
+              <span>ALL RIGHTS RESERVED</span>
+            </p>
+          </div>
         </footer>
       </main>
     </div>
