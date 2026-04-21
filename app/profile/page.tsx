@@ -23,7 +23,7 @@ export default function ProfilePage() {
     if (isSignedIn) {
       getVendorConfigs().then((data) => {
         const map: Record<string, string> = {};
-        data.forEach((c) => {
+        data.forEach((c: { vendorName: string; upiVpa: string | null }) => {
           if (c.upiVpa) map[c.vendorName] = c.upiVpa;
         });
         setConfigs(map);
