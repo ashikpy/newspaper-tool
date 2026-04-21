@@ -20,7 +20,7 @@ export default async function Home() {
               backgroundRepeat: "repeat",
               backgroundSize: "10px 10px",
               maskImage:
-                "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 50%, black 100%)",
+                "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.8) 80%, black 100%)",
               WebkitMaskImage:
                 "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 50%, black 100%)",
               opacity: 0.8,
@@ -147,17 +147,45 @@ export default async function Home() {
 
             {/* Sidebar Article 2 / Ad block */}
             <div className="p-6 flex-1 flex flex-col">
-              <div className="border-4 border-[#111] bg-neo-red p-6 h-full flex flex-col items-center justify-center text-center shadow-[6px_6px_0px_0px_#111] group  hover:text-[#111] transition-colors cursor-pointer text-[#111] bg-[url('/archive-pattern.svg')] bg-repeat bg-size-[400px_400px]">
-                <h4 className="text-3xl font-black uppercase mb-2">
-                  Join Archive
+              <div className="border-4 border-[#111] bg-neo-red p-8 h-full flex flex-col items-center justify-center text-center shadow-[8px_8px_0px_0px_#111] group hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0px_0px_#111] transition-all cursor-pointer relative overflow-hidden bg-[url('/archive-pattern.svg')] bg-repeat bg-size-[200px_200px]">
+                {/* Decorative background elements */}
+                <div className="absolute top-0 right-0 p-2 font-mono text-[10px] font-black uppercase opacity-20 rotate-90 origin-top-right pointer-events-none">
+                  System.Archive.v1
+                </div>
+
+                <div className="mb-6 z-10">
+                  <div className="w-16 h-16 border-4 border-[#111] bg-white rounded-full flex items-center justify-center shadow-[4px_4px_0px_0px_#111] mb-4 mx-auto group-hover:rotate-12 transition-transform">
+                    <span className="text-2xl font-black">†</span>
+                  </div>
+                </div>
+
+                <h4 className="text-4xl font-black uppercase mb-3 leading-none tracking-tighter z-10">
+                  Join The <br />
+                  Archive
                 </h4>
-                <p className="font-body text-sm font-bold mb-6">
-                  Preserve the structure.
+
+                <div className="font-mono text-[10px] font-black uppercase mb-6 bg-[#111] text-white px-2 py-1 inline-block z-10">
+                  Verified Member access
+                </div>
+
+                <p className="font-body text-sm font-bold mb-8 text-[#111] leading-tight z-10">
+                  Preserve the structure of information. Get exclusive insights
+                  and premium layouts.
                 </p>
-                <div className="w-full border-t-4 border-dashed border-[#111] mb-6"></div>
-                <button className="border-4 border-[#111] bg-white text-[#111] group-hover:bg-[#111] group-hover:text-white py-2 px-6 font-black uppercase transition-colors w-full shadow-[4px_4px_0px_0px_#111] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none">
-                  Subscribe
+
+                <div className="w-full border-t-2 border-[#111] mb-8 relative z-10">
+                  <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 bg-neo-red px-2">
+                    <div className="w-3 h-3 border-2 border-[#111] rotate-45 bg-white"></div>
+                  </div>
+                </div>
+
+                <button className="border-4 border-[#111] bg-white text-[#111] hover:bg-[#111] hover:text-white py-4 px-6 font-black uppercase transition-all w-full shadow-[6px_6px_0px_0px_#111] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none text-lg z-10">
+                  Subscribe Now
                 </button>
+
+                <p className="mt-4 text-[10px] uppercase font-black opacity-60 z-10">
+                  Cancel anytime • Non-refundable
+                </p>
               </div>
             </div>
           </aside>
