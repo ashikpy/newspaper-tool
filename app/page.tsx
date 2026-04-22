@@ -53,12 +53,21 @@ export default async function Home() {
           </div>
           <div className="flex md:flex-col gap-2 z-10 shrink-0">
             <Show when="signed-in">
-              <a
-                href="/tracker"
-                className="border-2 border-[#111] bg-white hover:bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block"
-              >
-                <span className="hidden md:inline-block">Go to</span> Tracker
-              </a>
+              <div className="flex gap-2">
+                <a
+                  href="/tracker"
+                  className="border-2 border-[#111] bg-white hover:bg-neo-blue py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block flex-1"
+                >
+                  Money <br />
+                  Tracker
+                </a>
+                <a
+                  href="/timer"
+                  className="border-2 border-[#111] bg-white hover:bg-neo-yellow py-1 px-3 font-bold uppercase shadow-[4px_4px_0px_0px_#111] text-sm text-center transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none block flex-1"
+                >
+                  <span className="hidden md:inline">Focus</span> Timer
+                </a>
+              </div>
 
               <div className="flex justify-center border-2 border-[#111] bg-white py-2 px-3 shadow-[4px_4px_0px_0px_#111] items-center gap-2">
                 <UserButton />
