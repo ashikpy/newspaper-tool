@@ -402,7 +402,7 @@ export default function TrackerPage() {
                         <span className="truncate">
                           {activeVendor.name} (Reg)
                         </span>
-                        <span className="whitespace-nowrap flex-shrink-0">
+                        <span className="whitespace-nowrap shrink-0">
                           {currentMonthStats.normalDaysTracked} x ₹
                           {activeVendor.normalPrice}
                         </span>
