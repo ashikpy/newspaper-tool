@@ -118,7 +118,7 @@ export default function TimerPage() {
       : 0;
 
   // Theme classes
-  const bg = isDark ? "bg-[#0a0a0a]/60" : "bg-[#faf8f5]/60";
+  const bg = isDark ? "bg-black" : "bg-newspaper-base";
   const text = isDark ? "text-[#e8e4df]" : "text-[#111]";
   const border = isDark ? "border-[#333]" : "border-[#111]";
   const borderColor = isDark ? "#333" : "#111";
@@ -130,20 +130,19 @@ export default function TimerPage() {
     <div
       className={`${bg} ${text} min-h-screen transition-colors duration-500 font-body relative overflow-hidden`}
     >
-      {/* ── Background Video ── */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <iframe
-          key={isMuted ? "muted" : "unmuted"}
-          className="absolute top-1/2 left-1/2 w-[115vw] h-[115vh] min-w-[177.77vh] min-h-[56.25vw] -translate-x-1/2 -translate-y-1/2 brightness-[0.4] grayscale-[0.5] contrast-[1.2]"
-          src={`https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&loop=1&playlist=jfKfPfyJRdk&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`}
-          allow="autoplay; encrypted-media"
-          frameBorder="0"
-        ></iframe>
-        {/* Black Overlay */}
-        <div
-          className={`absolute inset-0 z-10 ${isDark ? "bg-black/60" : "bg-black/40"}`}
-        />
-      </div>
+      {/* ── Background Video (dark mode only) ── */}
+      {isDark && (
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <iframe
+            key={isMuted ? "muted" : "unmuted"}
+            className="absolute top-1/2 left-1/2 w-[115vw] h-[115vh] min-w-[177.77vh] min-h-[56.25vw] -translate-x-1/2 -translate-y-1/2 brightness-[0.5] grayscale-[0.3] contrast-[1.1]"
+            src={`https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&loop=1&playlist=jfKfPfyJRdk&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`}
+            allow="autoplay; encrypted-media"
+            frameBorder="0"
+          ></iframe>
+          <div className="absolute inset-0 z-10 bg-black/50" />
+        </div>
+      )}
 
       {/* Progress bar across the top */}
       <div
@@ -158,7 +157,7 @@ export default function TimerPage() {
       <main className="relative z-20 max-w-5xl mx-auto px-4 md:px-8 pt-8 pb-16 flex flex-col min-h-screen">
         {/* ── Navigation ── */}
         <nav
-          className={`flex justify-between items-center pb-6 mb-8 border-b-4 ${border}`}
+          className={`flex justify-between items-center pb-6 mb-8 border-b ${border}`}
         >
           <div className="flex items-center gap-4">
             <Link
@@ -176,17 +175,17 @@ export default function TimerPage() {
             {/* Lofi toggle */}
             <button
               onClick={() => setIsMuted(!isMuted)}
-              className={`border-2 ${border} px-3 py-2 font-mono text-xs font-black flex items-center gap-2 shadow-[4px_4px_0px_0px_${shadowColor}] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all ${isMuted ? cardBg : "bg-neo-blue"}`}
+              className={`border-2 ${border} px-3 py-2 font-mono text-xs font-black flex items-center gap-2 shadow-[4px_4px_0px_0px_${shadowColor}] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all ${isMuted ? cardBg : "bg-neo-blue text-black"}`}
             >
               {isMuted ? (
                 <>
-                  <IoVolumeMuteSharp className={mutedText} />
-                  <span className="text-white">Lofi</span>
+                  <IoVolumeMuteSharp className="text-lg opacity-40" />
+                  <span>Lofi</span>
                 </>
               ) : (
                 <>
-                  <IoVolumeHighSharp className="text-black animate-pulse" />
-                  <span className="text-black">Lofi</span>
+                  <IoVolumeHighSharp className="text-lg animate-pulse" />
+                  <span>Lofi</span>
                 </>
               )}
             </button>
@@ -409,7 +408,7 @@ export default function TimerPage() {
         </div>
 
         {/* ── Footer ── */}
-        <footer className={`mt-16 pt-8 border-t-4 ${border}`}>
+        <footer className={`mt-16 pt-8 border-t ${border}`}>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div
               className={`font-mono text-[10px] font-black uppercase tracking-widest ${mutedText}`}
