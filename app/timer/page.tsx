@@ -32,7 +32,70 @@ export default function TimerPage() {
   const [inputMinutes, setInputMinutes] = useState(25);
   const [completedSessions, setCompletedSessions] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const [volume, setVolume] = useState(50);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playerRef = useRef<any>(null);
+
+  // YouTube IFrame Player API setup
+  useEffect(() => {
+    // Load API script
+    if (!(window as any).YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    }
+
+    const initPlayer = () => {
+      playerRef.current = new (window as any).YT.Player("yt-player", {
+        videoId: "jfKfPfyJRdk",
+        playerVars: {
+          autoplay: 1,
+          mute: 1,
+          controls: 0,
+          loop: 1,
+          playlist: "jfKfPfyJRdk",
+          showinfo: 0,
+          rel: 0,
+          modestbranding: 1,
+          iv_load_policy: 3,
+          disablekb: 1,
+        },
+        events: {
+          onReady: (e: any) => {
+            e.target.setVolume(volume);
+            if (!isMuted) e.target.unMute();
+          },
+        },
+      });
+    };
+
+    if ((window as any).YT && (window as any).YT.Player) {
+      initPlayer();
+    } else {
+      (window as any).onYouTubeIframeAPIReady = initPlayer;
+    }
+
+    return () => {
+      if (playerRef.current?.destroy) playerRef.current.destroy();
+    };
+  }, []); // Only once
+
+  // Sync mute state
+  useEffect(() => {
+    if (!playerRef.current?.setVolume) return;
+    if (isMuted) {
+      playerRef.current.mute();
+    } else {
+      playerRef.current.unMute();
+      playerRef.current.setVolume(volume);
+    }
+  }, [isMuted]);
+
+  // Sync volume
+  useEffect(() => {
+    if (!playerRef.current?.setVolume || isMuted) return;
+    playerRef.current.setVolume(volume);
+  }, [volume]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -122,7 +185,7 @@ export default function TimerPage() {
   const text = isDark ? "text-[#e8e4df]" : "text-[#111]";
   const border = isDark ? "border-[#333]" : "border-[#111]";
   const borderColor = isDark ? "#333" : "#111";
-  const cardBg = isDark ? "bg-[#161616]" : "bg-white";
+  const cardBg = isDark ? "bg-black/30" : "bg-white";
   const mutedText = isDark ? "text-[#666]" : "text-gray-400";
   const shadowColor = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,1)";
 
@@ -134,13 +197,10 @@ export default function TimerPage() {
       <div
         className={`fixed inset-0 z-0 pointer-events-none overflow-hidden ${isDark ? "opacity-100" : "opacity-0"}`}
       >
-        <iframe
-          key={isMuted ? "muted" : "unmuted"}
-          className="absolute top-1/2 left-1/2 w-[115vw] h-[115vh] min-w-[177.77vh] min-h-[56.25vw] -translate-x-1/2 -translate-y-1/2 brightness-[0.5] grayscale-[0.3] contrast-[1.1]"
-          src={`https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&loop=1&playlist=jfKfPfyJRdk&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`}
-          allow="autoplay; encrypted-media"
-          frameBorder="0"
-        ></iframe>
+        <div
+          id="yt-player"
+          className="absolute top-1/2 left-1/2 w-[115vw] h-[115vh] min-w-[177.77vh] min-h-[56.25vw] -translate-x-1/2 -translate-y-1/2 brightness-[0.35] grayscale-[0.3] contrast-[1.1]"
+        />
         <div className="absolute inset-0 z-10 bg-black/50" />
       </div>
 
@@ -154,10 +214,10 @@ export default function TimerPage() {
         />
       </div>
 
-      <main className="relative z-20 max-w-5xl mx-auto px-4 md:px-8 pt-8 pb-16 flex flex-col min-h-screen">
+      <main className="relative z-20 max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col justify-between  min-h-screen ">
         {/* ── Navigation ── */}
         <nav
-          className={`flex justify-between items-center pb-6 mb-8 border-b ${border}`}
+          className={`flex justify-between items-center pb-6  border-b ${border}`}
         >
           <div className="flex items-center gap-4">
             <Link
@@ -170,25 +230,42 @@ export default function TimerPage() {
               Focus Timer
             </h2>
           </div>
-
           <div className="flex items-center gap-3">
-            {/* Lofi toggle */}
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className={`border-2 ${border} px-3 py-2 font-mono text-xs font-black flex items-center gap-2 shadow-[4px_4px_0px_0px_${shadowColor}] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all ${isMuted ? cardBg : "bg-neo-blue text-black"}`}
-            >
-              {isMuted ? (
-                <>
-                  <IoVolumeMuteSharp className="text-lg opacity-40" />
-                  <span>Lofi</span>
-                </>
-              ) : (
-                <>
-                  <IoVolumeHighSharp className="text-lg animate-pulse" />
-                  <span>Lofi</span>
-                </>
+            {/* Lofi toggle + volume */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                aria-label={isMuted ? "Unmute lofi music" : "Mute lofi music"}
+                className={`border-2 ${border} px-4 py-2.5 font-mono text-xs font-black flex items-center gap-2 shadow-[4px_4px_0px_0px_${shadowColor}] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all ${isMuted ? cardBg : "bg-neo-blue text-black"}`}
+              >
+                {isMuted ? (
+                  <IoVolumeMuteSharp className="text-lg opacity-50" />
+                ) : (
+                  <IoVolumeHighSharp className="text-lg" />
+                )}
+                <span className="hidden sm:inline">
+                  {isMuted ? "Play Lofi" : "Lofi On"}
+                </span>
+              </button>
+              {!isMuted && (
+                <div
+                  className={`border-2 ${border} px-3 py-2.5 flex items-center gap-2 ${cardBg}`}
+                >
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={volume}
+                    onChange={(e) => setVolume(parseInt(e.target.value))}
+                    aria-label="Lofi volume"
+                    className="w-20 h-1 accent-neo-red cursor-pointer"
+                  />
+                  <span className="font-mono text-[10px] font-black w-6 text-center">
+                    {volume}
+                  </span>
+                </div>
               )}
-            </button>
+            </div>
             {/* Session counter */}
             <div
               className={`border-2 ${border} px-3 py-2 font-mono text-xs font-black flex items-center gap-2 ${cardBg}`}
@@ -209,13 +286,13 @@ export default function TimerPage() {
             </button>
           </div>
         </nav>
-
         {/* ── Main Content ── */}
+
         <div className="flex-1 flex flex-col items-center justify-center gap-12">
           {/* Timer Card */}
           <div className="w-full max-w-2xl">
             <div
-              className={`relative border-4 ${border} ${cardBg} p-8 md:p-12 ${alarmActive ? "animate-pulse" : ""}`}
+              className={`relative border-4 ${border} ${cardBg} backdrop-blur-sm p-8 md:p-12 ${alarmActive ? "animate-pulse" : ""}`}
               style={{
                 boxShadow: `12px 12px 0px 0px ${borderColor}`,
               }}
@@ -226,7 +303,6 @@ export default function TimerPage() {
               >
                 Focus.Session.v1
               </div>
-
               {/* Edition time */}
               <div
                 className={`absolute -top-4 right-8 ${isDark ? "bg-neo-yellow text-[#111]" : "bg-neo-yellow text-[#111]"} px-4 py-1 font-mono text-[10px] font-black uppercase tracking-widest`}
@@ -237,7 +313,6 @@ export default function TimerPage() {
                   month: "short",
                 })}
               </div>
-
               {/* Decorative corner marks */}
               <div
                 className={`absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 ${border} opacity-30`}
@@ -251,16 +326,14 @@ export default function TimerPage() {
               <div
                 className={`absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 ${border} opacity-30`}
               />
-
               {/* Time Display */}
               <div className="flex flex-col items-center py-8 md:py-12">
                 <h1
-                  className="text-[5rem] md:text-[10rem] lg:text-[12rem] font-black font-mono leading-none tracking-tighter select-none"
+                  className="text-[5rem] md:text-[10rem] lg:text-[12rem] font-black font-mono leading-none  select-none"
                   style={{ fontVariantNumeric: "tabular-nums" }}
                 >
                   {formatTime(displaySeconds)}
                 </h1>
-
                 {/* Status line */}
                 <div
                   className={`mt-4 flex items-center gap-3 font-mono text-xs font-bold uppercase ${mutedText}`}
@@ -294,7 +367,6 @@ export default function TimerPage() {
                   )}
                 </div>
               </div>
-
               {/* Progress Bar inside card */}
               <div className={`w-full h-3 border-2 ${border} overflow-hidden`}>
                 <div
@@ -312,7 +384,6 @@ export default function TimerPage() {
               </div>
             </div>
           </div>
-
           {/* ── Presets Row ── */}
           <div className="w-full max-w-2xl">
             <div
@@ -335,7 +406,6 @@ export default function TimerPage() {
                   {preset.label}
                 </button>
               ))}
-
               {/* Custom input */}
               <div
                 className={`border-2 ${border} flex items-center overflow-hidden ${cardBg} shadow-[4px_4px_0px_0px_${shadowColor}]`}
@@ -361,7 +431,6 @@ export default function TimerPage() {
               </div>
             </div>
           </div>
-
           {/* ── Controls ── */}
           <div className="w-full max-w-2xl flex gap-4">
             {!isActive ? (
@@ -383,7 +452,6 @@ export default function TimerPage() {
                 Pause
               </button>
             )}
-
             <button
               onClick={stopTimer}
               className={`border-4 ${border} px-6 py-5 bg-neo-red text-[#111] transition-all active:translate-x-1 active:translate-y-1`}
@@ -391,7 +459,6 @@ export default function TimerPage() {
             >
               <IoStopSharp className="text-2xl" />
             </button>
-
             <button
               onClick={() => {
                 stopTimer();
@@ -408,7 +475,7 @@ export default function TimerPage() {
         </div>
 
         {/* ── Footer ── */}
-        <footer className={`mt-16 pt-8 border-t ${border}`}>
+        <footer className={` pt-8 border-t ${border}`}>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div
               className={`font-mono text-[10px] font-black uppercase tracking-widest ${mutedText}`}
