@@ -130,19 +130,19 @@ export default function TimerPage() {
     <div
       className={`${bg} ${text} min-h-screen transition-colors duration-500 font-body relative overflow-hidden`}
     >
-      {/* ── Background Video (dark mode only) ── */}
-      {isDark && (
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-          <iframe
-            key={isMuted ? "muted" : "unmuted"}
-            className="absolute top-1/2 left-1/2 w-[115vw] h-[115vh] min-w-[177.77vh] min-h-[56.25vw] -translate-x-1/2 -translate-y-1/2 brightness-[0.5] grayscale-[0.3] contrast-[1.1]"
-            src={`https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&loop=1&playlist=jfKfPfyJRdk&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`}
-            allow="autoplay; encrypted-media"
-            frameBorder="0"
-          ></iframe>
-          <div className="absolute inset-0 z-10 bg-black/50" />
-        </div>
-      )}
+      {/* ── Background Video (Always in DOM for audio) ── */}
+      <div
+        className={`fixed inset-0 z-0 pointer-events-none overflow-hidden ${isDark ? "opacity-100" : "opacity-0"}`}
+      >
+        <iframe
+          key={isMuted ? "muted" : "unmuted"}
+          className="absolute top-1/2 left-1/2 w-[115vw] h-[115vh] min-w-[177.77vh] min-h-[56.25vw] -translate-x-1/2 -translate-y-1/2 brightness-[0.5] grayscale-[0.3] contrast-[1.1]"
+          src={`https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&loop=1&playlist=jfKfPfyJRdk&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`}
+          allow="autoplay; encrypted-media"
+          frameBorder="0"
+        ></iframe>
+        <div className="absolute inset-0 z-10 bg-black/50" />
+      </div>
 
       {/* Progress bar across the top */}
       <div
