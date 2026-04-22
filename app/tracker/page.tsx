@@ -411,7 +411,7 @@ export default function TrackerPage() {
                         <span className="truncate">
                           {activeVendor.name} (Sun)
                         </span>
-                        <span className="whitespace-nowrap flex-shrink-0">
+                        <span className="whitespace-nowrap shrink-0">
                           {currentMonthStats.sundaysTracked} x ₹
                           {activeVendor.sundayPrice}
                         </span>
@@ -420,7 +420,9 @@ export default function TrackerPage() {
 
                     <div className="flex justify-between text-sm font-black border-b-2 border-[#111] pb-1">
                       <span>TOTAL PAYABLE</span>
-                      <span className="whitespace-nowrap">₹{currentMonthStats.totalCost}</span>
+                      <span className="whitespace-nowrap">
+                        ₹{currentMonthStats.totalCost}
+                      </span>
                     </div>
 
                     {/* Fixed-height Payment Section to prevent layout shift */}
