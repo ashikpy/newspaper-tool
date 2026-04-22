@@ -27,10 +27,11 @@ export default function TimerPage() {
   const [totalSeconds, setTotalSeconds] = useState(25 * 60);
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const [alarmActive, setAlarmActive] = useState(false);
   const [inputMinutes, setInputMinutes] = useState(25);
   const [completedSessions, setCompletedSessions] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -112,32 +113,49 @@ export default function TimerPage() {
 
   const displaySeconds = seconds > 0 || isActive ? seconds : inputMinutes * 60;
   const progress =
-    totalSeconds > 0 ? ((totalSeconds - displaySeconds) / totalSeconds) * 100 : 0;
+    totalSeconds > 0
+      ? ((totalSeconds - displaySeconds) / totalSeconds) * 100
+      : 0;
 
   // Theme classes
-  const bg = isDark ? "bg-[#0a0a0a]" : "bg-newspaper-base";
+  const bg = isDark ? "bg-[#0a0a0a]/60" : "bg-[#faf8f5]/60";
   const text = isDark ? "text-[#e8e4df]" : "text-[#111]";
   const border = isDark ? "border-[#333]" : "border-[#111]";
   const borderColor = isDark ? "#333" : "#111";
   const cardBg = isDark ? "bg-[#161616]" : "bg-white";
   const mutedText = isDark ? "text-[#666]" : "text-gray-400";
-  const shadowColor = isDark
-    ? "rgba(255,255,255,0.05)"
-    : "rgba(0,0,0,1)";
+  const shadowColor = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,1)";
 
   return (
     <div
-      className={`${bg} ${text} min-h-screen transition-colors duration-500 font-body`}
+      className={`${bg} ${text} min-h-screen transition-colors duration-500 font-body relative overflow-hidden`}
     >
+      {/* ── Background Video ── */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <iframe
+          key={isMuted ? "muted" : "unmuted"}
+          className="absolute top-1/2 left-1/2 w-[115vw] h-[115vh] min-w-[177.77vh] min-h-[56.25vw] -translate-x-1/2 -translate-y-1/2 brightness-[0.4] grayscale-[0.5] contrast-[1.2]"
+          src={`https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&loop=1&playlist=jfKfPfyJRdk&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`}
+          allow="autoplay; encrypted-media"
+          frameBorder="0"
+        ></iframe>
+        {/* Black Overlay */}
+        <div
+          className={`absolute inset-0 z-10 ${isDark ? "bg-black/60" : "bg-black/40"}`}
+        />
+      </div>
+
       {/* Progress bar across the top */}
-      <div className={`fixed top-0 left-0 w-full h-1.5 ${isDark ? "bg-[#222]" : "bg-gray-200"} z-50`}>
+      <div
+        className={`fixed top-0 left-0 w-full h-1.5 ${isDark ? "bg-[#222]" : "bg-gray-200"} z-50`}
+      >
         <div
           className="h-full bg-neo-red transition-all duration-1000 ease-linear"
           style={{ width: `${isActive || seconds > 0 ? progress : 0}%` }}
         />
       </div>
 
-      <main className="max-w-5xl mx-auto px-4 md:px-8 pt-8 pb-16 flex flex-col min-h-screen">
+      <main className="relative z-20 max-w-5xl mx-auto px-4 md:px-8 pt-8 pb-16 flex flex-col min-h-screen">
         {/* ── Navigation ── */}
         <nav
           className={`flex justify-between items-center pb-6 mb-8 border-b-4 ${border}`}
@@ -155,6 +173,23 @@ export default function TimerPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Lofi toggle */}
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className={`border-2 ${border} px-3 py-2 font-mono text-xs font-black flex items-center gap-2 shadow-[4px_4px_0px_0px_${shadowColor}] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all ${isMuted ? cardBg : "bg-neo-blue"}`}
+            >
+              {isMuted ? (
+                <>
+                  <IoVolumeMuteSharp className={mutedText} />
+                  <span className="text-white">Lofi</span>
+                </>
+              ) : (
+                <>
+                  <IoVolumeHighSharp className="text-black animate-pulse" />
+                  <span className="text-black">Lofi</span>
+                </>
+              )}
+            </button>
             {/* Session counter */}
             <div
               className={`border-2 ${border} px-3 py-2 font-mono text-xs font-black flex items-center gap-2 ${cardBg}`}
@@ -194,7 +229,9 @@ export default function TimerPage() {
               </div>
 
               {/* Edition time */}
-              <div className={`absolute -top-4 right-8 ${isDark ? "bg-neo-yellow text-[#111]" : "bg-neo-yellow text-[#111]"} px-4 py-1 font-mono text-[10px] font-black uppercase tracking-widest`}>
+              <div
+                className={`absolute -top-4 right-8 ${isDark ? "bg-neo-yellow text-[#111]" : "bg-neo-yellow text-[#111]"} px-4 py-1 font-mono text-[10px] font-black uppercase tracking-widest`}
+              >
                 {new Date().toLocaleDateString("en-IN", {
                   weekday: "short",
                   day: "2-digit",
@@ -203,10 +240,18 @@ export default function TimerPage() {
               </div>
 
               {/* Decorative corner marks */}
-              <div className={`absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 ${border} opacity-30`} />
-              <div className={`absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 ${border} opacity-30`} />
-              <div className={`absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 ${border} opacity-30`} />
-              <div className={`absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 ${border} opacity-30`} />
+              <div
+                className={`absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 ${border} opacity-30`}
+              />
+              <div
+                className={`absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 ${border} opacity-30`}
+              />
+              <div
+                className={`absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 ${border} opacity-30`}
+              />
+              <div
+                className={`absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 ${border} opacity-30`}
+              />
 
               {/* Time Display */}
               <div className="flex flex-col items-center py-8 md:py-12">
@@ -218,7 +263,9 @@ export default function TimerPage() {
                 </h1>
 
                 {/* Status line */}
-                <div className={`mt-4 flex items-center gap-3 font-mono text-xs font-bold uppercase ${mutedText}`}>
+                <div
+                  className={`mt-4 flex items-center gap-3 font-mono text-xs font-bold uppercase ${mutedText}`}
+                >
                   {isActive && (
                     <span className="flex items-center gap-1.5">
                       <span className="w-2 h-2 bg-neo-red rounded-full animate-pulse" />
@@ -269,7 +316,9 @@ export default function TimerPage() {
 
           {/* ── Presets Row ── */}
           <div className="w-full max-w-2xl">
-            <div className={`font-mono text-[10px] font-black uppercase ${mutedText} mb-3 tracking-widest`}>
+            <div
+              className={`font-mono text-[10px] font-black uppercase ${mutedText} mb-3 tracking-widest`}
+            >
               Quick Presets
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -362,15 +411,20 @@ export default function TimerPage() {
         {/* ── Footer ── */}
         <footer className={`mt-16 pt-8 border-t-4 ${border}`}>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className={`font-mono text-[10px] font-black uppercase tracking-widest ${mutedText}`}>
+            <div
+              className={`font-mono text-[10px] font-black uppercase tracking-widest ${mutedText}`}
+            >
               © {new Date().getFullYear()} Brutalist Toolkit • Focus Module
             </div>
-            <div className={`flex gap-6 font-mono text-[10px] font-black uppercase tracking-widest ${mutedText}`}>
+            <div
+              className={`flex gap-6 font-mono text-[10px] font-black uppercase tracking-widest ${mutedText}`}
+            >
               <span>Sessions: {completedSessions}</span>
-              <span className={`w-1 h-1 ${isDark ? "bg-[#444]" : "bg-gray-300"} rotate-45 self-center`} />
+              <span
+                className={`w-1 h-1 ${isDark ? "bg-[#444]" : "bg-gray-300"} rotate-45 self-center`}
+              />
               <span>
-                Total:{" "}
-                {formatTime(completedSessions * inputMinutes * 60)}
+                Total: {formatTime(completedSessions * inputMinutes * 60)}
               </span>
             </div>
           </div>
