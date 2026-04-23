@@ -5,6 +5,7 @@
   --color-neo-yellow: #fef08a;
   --color-neo-red: #fca5a5;
   --color-neo-blue: #bae6fd;
+  --color-neo-green: #bbf7d0;
   --font-display: var(--font-instrument-serif), serif;
   --font-body: var(--font-instrument-sans), sans-serif;
   --font-mono: var(--font-ibm-plex-mono), monospace;
@@ -59,8 +60,12 @@ h6 {
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @utility animate-shimmer {

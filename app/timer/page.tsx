@@ -503,7 +503,7 @@ export default function TimerPage() {
                 setTotalSeconds(25 * 60);
                 setCompletedSessions(0);
               }}
-              className={`border-4 ${border} px-6 py-5 ${cardBg} transition-all active:translate-x-1 active:translate-y-1`}
+              className={`border-4 ${border} px-6 py-5 ${cardBg} transition-all active:translate-x-1 active:translate-y-1 bg-neo-green text-black`}
               style={{ boxShadow: `8px 8px 0px 0px ${borderColor}` }}
             >
               <IoRefreshSharp className="text-2xl" />
