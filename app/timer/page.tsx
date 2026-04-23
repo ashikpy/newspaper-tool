@@ -97,6 +97,42 @@ export default function TimerPage() {
     playerRef.current.setVolume(volume);
   }, [volume]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts if user is typing in an input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      // Space to toggle lofi
+      if (e.code === "Space") {
+        e.preventDefault();
+        setIsMuted((prev) => !prev);
+      }
+
+      // Cmd/Alt + Arrow Left to reduce volume
+      if ((e.metaKey || e.altKey) && e.code === "ArrowLeft") {
+        e.preventDefault();
+        setVolume((v) => Math.max(0, v - 5));
+        setIsMuted(false);
+      }
+
+      // Cmd/Alt + Arrow Right to increase volume
+      if ((e.metaKey || e.altKey) && e.code === "ArrowRight") {
+        e.preventDefault();
+        setVolume((v) => Math.min(100, v + 5));
+        setIsMuted(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isActive && seconds > 0) {
@@ -184,6 +220,7 @@ export default function TimerPage() {
   const bg = isDark ? "bg-black" : "bg-newspaper-base";
   const text = isDark ? "text-[#e8e4df]" : "text-[#111]";
   const border = isDark ? "border-[#333]" : "border-[#111]";
+  const borderAccents = isDark ? "border-white" : "border-[#111]";
   const borderColor = isDark ? "#333" : "#111";
   const cardBg = isDark ? "bg-black/30" : "bg-white";
   const mutedText = isDark ? "text-[#666]" : "text-gray-400";
@@ -315,16 +352,16 @@ export default function TimerPage() {
               </div>
               {/* Decorative corner marks */}
               <div
-                className={`absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 ${border} opacity-30`}
+                className={`absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 ${borderAccents} opacity-30`}
               />
               <div
-                className={`absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 ${border} opacity-30`}
+                className={`absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 ${borderAccents} opacity-30`}
               />
               <div
-                className={`absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 ${border} opacity-30`}
+                className={`absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 ${borderAccents} opacity-30`}
               />
               <div
-                className={`absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 ${border} opacity-30`}
+                className={`absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 ${borderAccents} opacity-30`}
               />
               {/* Time Display */}
               <div className="flex flex-col items-center py-8 md:py-12">
